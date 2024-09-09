@@ -1,13 +1,29 @@
 import {
+  json,
   Links,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
 } from "@remix-run/react";
 import "./tailwind.css";
+import { ContextProvider } from "~/contexts/Context";
+import React from "react";
+export async function loader() {
+  return json({
+    ENV: {
+      API_KEY: process.env.API_KEY,
+      API_URL: process.env.API_URL,
+    },
+  });
+}
+const Setup: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return <>{children}</>;
+};
 
 export function Layout({ children }: { children: React.ReactNode }) {
+  const data = useLoaderData<typeof loader>();
   return (
     <html lang="en">
       <head>
@@ -17,7 +33,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        {children}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.ENV = ${JSON.stringify(data.ENV)}`,
+          }}
+        />
+        <ContextProvider>
+          <Setup>{children}</Setup>
+        </ContextProvider>
+
         <ScrollRestoration />
         <Scripts />
       </body>

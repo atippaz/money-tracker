@@ -1,5 +1,7 @@
-import type { MetaFunction } from "@remix-run/node";
-
+import { redirect, type MetaFunction } from "@remix-run/node";
+import HomePage from "~/routes/homepage/_index";
+import Navbar from "~/components/layouts/Navbar";
+import { Navigate, useNavigate } from "@remix-run/react";
 export const meta: MetaFunction = () => {
   return [
     { title: "New Remix App" },
@@ -7,42 +9,15 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-export default function Index() {
+const Index = () => {
   return (
-    <div className="font-sans p-4">
-      <h1 className="text-3xl">Welcome to Remix</h1>
-      <ul className="list-disc mt-4 pl-6 space-y-2">
-        <li>
-          <a
-            className="text-blue-700 underline visited:text-purple-900"
-            target="_blank"
-            href="https://remix.run/start/quickstart"
-            rel="noreferrer"
-          >
-            5m Quick Start
-          </a>
-        </li>
-        <li>
-          <a
-            className="text-blue-700 underline visited:text-purple-900"
-            target="_blank"
-            href="https://remix.run/start/tutorial"
-            rel="noreferrer"
-          >
-            30m Tutorial
-          </a>
-        </li>
-        <li>
-          <a
-            className="text-blue-700 underline visited:text-purple-900"
-            target="_blank"
-            href="https://remix.run/docs"
-            rel="noreferrer"
-          >
-            Remix Docs
-          </a>
-        </li>
-      </ul>
+    <div className="flex h-full w-full flex-col">
+      <Navbar />
+      <div className="bg-slate-100 h-full w-full">
+        <HomePage />
+      </div>
     </div>
   );
-}
+};
+
+export default Index;

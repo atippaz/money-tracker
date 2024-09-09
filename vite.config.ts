@@ -13,4 +13,7 @@ export default defineConfig({
     }),
     tsconfigPaths(),
   ],
+  optimizeDeps: {
+    include: ["recharts"], // โมดูลที่ Vite ต้อง pre-bundle
+  },
 });
