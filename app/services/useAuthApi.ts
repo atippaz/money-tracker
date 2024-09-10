@@ -9,8 +9,27 @@ export default function useAuthApi() {
         password: password,
       });
     },
-    async register() {
-      return await baseApi.getRequest(controllerName + "/register");
+    async register({
+      userName,
+      email,
+      firstName,
+      lastName,
+      password,
+    }: {
+      userName: string;
+      email: string;
+      firstName: string;
+      lastName: string;
+      password: string;
+    }) {
+      return await baseApi.postRequest(controllerName + "/register", {
+        userName,
+        email,
+        firstName,
+        lastName,
+        password,
+        profile: "",
+      });
     },
     async logout() {
       return await baseApi.getRequest(controllerName + "/logout");

@@ -1,25 +1,58 @@
 import { Input } from "~/components/ui/input";
 import { Button } from "~/components/ui/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import _auth from "~/utils/auth";
-import { useNavigate } from "@remix-run/react";
-
-const LoginPage = () => {
-  const [credential, setCredential] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+import { json, redirect, useActionData, useNavigate } from "@remix-run/react";
+import { ActionFunction, TypedResponse } from "@remix-run/node";
+interface ResponseAction<T = unknown> {
+  status: number;
+  data: T;
+}
+export const action: ActionFunction = async ({
+  request,
+}): Promise<TypedResponse<ResponseAction<string>>> => {
   const auth = _auth();
 
-  async function login() {
-    setLoading(true);
-    try {
-      await auth.login(credential, password);
-    } catch (ex) {
-      console.log(ex);
-      alert("a");
-    }
-    setLoading(false);
+  const formData = await request.formData();
+  const credential = formData.get("credential");
+  const password = formData.get("password");
+
+  if (typeof credential !== "string" || typeof password !== "string") {
+    return json<ResponseAction<string>>({
+      data: "Invalid form data",
+      status: 400,
+    });
   }
+
+  try {
+    const result = await auth.login(credential, password);
+    if (!result) throw new Error("");
+    // redirect("/");
+    return json<ResponseAction<string>>({
+      data: result,
+      status: 200,
+    });
+  } catch (ex) {
+    return json<ResponseAction<string>>({
+      data: "Invalid form data",
+      status: 400,
+    });
+  }
+};
+const LoginPage = () => {
+  const [loading, setLoading] = useState(false);
+  const actionData = useActionData<ResponseAction<string>>();
+
+  useEffect(() => {
+    if (!actionData) return;
+    if (actionData?.status == 400) {
+      alert("รหัสผ่านผิด");
+      return;
+    }
+    localStorage.setItem("auth", actionData!.data);
+    navigate("/");
+  }, [actionData]);
+
   const navigate = useNavigate();
   async function register() {
     navigate("/register");
@@ -28,7 +61,7 @@ const LoginPage = () => {
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-md">
         <h1 className="text-2xl font-bold mb-6 text-center">Login</h1>
-        <form className="space-y-4">
+        <form className="space-y-4" method="post">
           <div>
             <label
               htmlFor="email"
@@ -37,8 +70,7 @@ const LoginPage = () => {
               Email Or Username
             </label>
             <Input
-              value={credential}
-              onChange={(e) => setCredential((x) => e.target.value)}
+              name="credential"
               placeholder="you@example.com"
               className="mt-1 block w-full"
             />
@@ -51,19 +83,17 @@ const LoginPage = () => {
               Password
             </label>
             <Input
-              id="password"
+              name="password"
               type="password"
-              value={password}
-              onChange={(e) => setPassword((x) => e.target.value)}
               placeholder="********"
               className="mt-1 block w-full"
             />
           </div>
           <Button
-            onClick={(e) => {
-              e.preventDefault();
-              login();
-            }}
+            // onClick={(e) => {
+            //   e.preventDefault();
+            //   login();
+            // }}
             type="submit"
             disabled={loading}
             className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded"
@@ -75,7 +105,6 @@ const LoginPage = () => {
               e.preventDefault();
               register();
             }}
-            type="submit"
             disabled={loading}
             className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded"
           >

@@ -3,7 +3,6 @@ import useSystemTagApi from "~/services/useTagApi";
 import useUserApi from "~/services/useUserApi";
 import React, { createContext, useContext, useState, useEffect } from "react";
 import stateManager from "./StateManager";
-import { redirect, useRoutes } from "@remix-run/react";
 
 interface Context {
   tags: [];
@@ -11,7 +10,51 @@ interface Context {
   spendingTypes: [];
   refresh: (redirecting?: boolean) => Promise<void>;
 }
+import { json } from "@remix-run/node";
+import { redirect, useLoaderData } from "@remix-run/react";
 
+// ฟังก์ชัน loader สำหรับ query ข้อมูลจาก server
+export const loader = async ({ request }: { request: Request }) => {
+  // Initialize API handlers
+  const systemTagApi = useSystemTagApi();
+  const spendingTypeApi = useSpendingTypeApi();
+  const userApi = useUserApi();
+
+  // Check for authentication token
+  const accressToken = stateManager.getAccessTokenState(); // Replace with how you get the token server-side
+
+  // Redirect if not authenticated
+  if (!accressToken && new URL(request.url).pathname !== "/login") {
+    return redirect("/login");
+  }
+
+  try {
+    // Fetch data from APIs
+    const [spendingTypes, userProfile, tags] = await Promise.all([
+      spendingTypeApi.getAll(),
+      accressToken ? userApi.getProfile() : null,
+      systemTagApi.getByUser(true),
+    ]);
+
+    // Handle user profile if authenticated
+    if (userProfile) {
+      stateManager.setProfileState({
+        displayName: userProfile.displayName,
+        email: userProfile.email,
+        firstName: userProfile.firstName,
+        lastName: userProfile.lastName,
+        profile: userProfile.profile,
+        userId: userProfile.userId,
+        userName: userProfile.userName,
+      });
+    }
+
+    return json({ spendingTypes, tags });
+  } catch (error) {
+    console.error("Failed to fetch dropdown data:", error);
+    return json({ error: "Failed to fetch data" }, { status: 500 });
+  }
+};
 const Provider = createContext<Context | null>(null);
 export const ContextProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -19,56 +62,15 @@ export const ContextProvider: React.FC<{ children: React.ReactNode }> = ({
   const [tags, setTags] = useState<[]>([]);
   const [spendingTypes, setspendingTypes] = useState<[]>([]);
 
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
   const refresh = async (redirecting: boolean = false) => {
     setLoading(true);
-    // if (
-    //   (window.location.pathname == "/login" && !redirecting) ||
-    //   window.location.pathname == "/register"
-    // ) {
-    //   setLoading(false);
-    //   return;
-    // }
-    try {
-      let accressToken: string | null = stateManager.getAccessTokenState();
 
-      const systemTagApi = useSystemTagApi();
-      const spendingTypeApi = useSpendingTypeApi();
-      const types = await spendingTypeApi.getAll();
-
-      setspendingTypes((x) => types);
-      const userApi = useUserApi();
-      try {
-        if (accressToken != null) {
-          const res = await userApi.getProfile();
-          stateManager.setProfileState({
-            displayName: res.displayName,
-            email: res.email,
-            firstName: res.firstName,
-            lastName: res.lastName,
-            profile: res.profile,
-            userId: res.userId,
-            userName: res.userName,
-          });
-        } else {
-          throw new Error("not authen");
-        }
-      } catch (er) {
-        if (window.location.pathname != "/login") {
-          window.location.href = "/login";
-        }
-      }
-      const tags = await systemTagApi.getByUser(true);
-
-      setTags((x) => tags);
-      // router("/homepage");
-    } catch (error) {
-      console.error("Failed to fetch dropdown data:", error);
-    }
     setLoading(false);
   };
   useEffect(() => {
     stateManager.setAccessTokenState(localStorage.getItem("auth") || null);
+
     refresh();
   }, []);
   return (
