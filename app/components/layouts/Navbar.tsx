@@ -1,10 +1,10 @@
-import { Button } from "~/components/ui/button"; // Import Shadcn UI Button component
-import authUtil from "~/utils/auth";
+import { Button } from "~/components/ui/button";
+// import authUtil from "~/utils/auth";
 import { useState } from "react";
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const auth = authUtil();
+  // const auth = authUtil();
   return (
     <nav className="bg-gray-800 text-white shadow-md">
       <div className=" mx-auto flex justify-between items-center p-4">
@@ -25,7 +25,10 @@ function Navbar() {
         <Button
           variant="default"
           className="ml-4"
-          onClick={() => auth.logout()}
+          onClick={(e) => {
+            e.preventDefault();
+            // auth.logout();
+          }}
         >
           Logout
         </Button>

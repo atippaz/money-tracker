@@ -3,11 +3,15 @@ import { Button } from "~/components/ui/button";
 import { useEffect, useState } from "react";
 import _auth from "~/utils/auth";
 import { json, redirect, useActionData, useNavigate } from "@remix-run/react";
-import { ActionFunction, TypedResponse } from "@remix-run/node";
-interface ResponseAction<T = unknown> {
-  status: number;
-  data: T;
-}
+import {
+  ActionFunction,
+  createCookie,
+  createSession,
+  TypedResponse,
+} from "@remix-run/node";
+import { ResponseAction } from "~/interfaces/loader";
+import { session } from "~/utils/cookie";
+
 export const action: ActionFunction = async ({
   request,
 }): Promise<TypedResponse<ResponseAction<string>>> => {
@@ -28,10 +32,18 @@ export const action: ActionFunction = async ({
     const result = await auth.login(credential, password);
     if (!result) throw new Error("");
     // redirect("/");
-    return json<ResponseAction<string>>({
-      data: result,
-      status: 200,
-    });
+
+    return json<ResponseAction<string>>(
+      {
+        data: result,
+        status: 200,
+      },
+      {
+        headers: {
+          "Set-Cookie": await session.serialize(result),
+        },
+      }
+    );
   } catch (ex) {
     return json<ResponseAction<string>>({
       data: "Invalid form data",

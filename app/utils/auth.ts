@@ -1,6 +1,6 @@
 import useAuthApi from "~/services/useAuthApi";
 // import { useRouter } from "next/navigation";
-import { redirect, useNavigate } from "@remix-run/react";
+import { redirect } from "@remix-run/react";
 export default function auth() {
   const authApi = useAuthApi();
   // useContextStore;!

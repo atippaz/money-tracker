@@ -3,7 +3,6 @@ import stateManager from "~/contexts/StateManager";
 export default function useBaseApi() {
   const requestInstance = (url: string, option: RequestInit = {}) => {
     let accressToken: string | null = stateManager.getAccessTokenState();
-
     const API_URL =
       typeof window !== "undefined"
         ? (window as any).ENV.API_URL
